@@ -18,11 +18,7 @@ func main() {
 	log := setupLogger(cfg.Env)
 
 	log.Info("starting url-shorter", slog.String("env", cfg.Env))
-	log.Debug("debut messages are enabled")
-
-	// TODO: init logger slog
-
-	// TODO: init storage sqlite
+	log.Debug("debug messages are enabled")
 
 	// TODO init router chi, render
 
