@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"url-shortener/internal/config"
+	"url-shortener/internal/http-server/handlers/redirect"
 	"url-shortener/internal/http-server/handlers/url/save"
 	mwLogger "url-shortener/internal/http-server/middleware"
 	"url-shortener/internal/lib/logger/handlers/slogpretty"
@@ -25,7 +26,9 @@ func main() {
 
 	log := setupLogger(cfg.Env)
 
-	log.Info("starting url-shorter", slog.String("env", cfg.Env))
+	log.Info("starting url-shorter",
+		slog.String("env", cfg.Env),
+	)
 	log.Debug("debug messages are enabled")
 
 	router := chi.NewRouter()
@@ -42,7 +45,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	router.Post("/url", save.New(log, storage))
+	router.Route("/url", func(r chi.Router) {
+		r.Use(middleware.BasicAuth("url-shortener", map[string]string{
+			cfg.HTTPServer.User: cfg.HTTPServer.Password,
+		}))
+
+		r.Post("/", save.New(log, storage))
+	})
+
+	router.Get("/{alias}", redirect.New(log, storage))
 
 	log.Info("starting server", slog.String("address", cfg.Address))
 
